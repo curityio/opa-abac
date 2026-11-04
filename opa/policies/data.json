@@ -1,0 +1,8 @@
+{
+  "endpoints": {
+    "/api/public":       { "required_clearance": "public" },
+    "/api/internal":     { "required_clearance": "internal" },
+    "/api/confidential": { "required_clearance": "confidential", "restricted_hours": [7, 21] },
+    "/api/top-secret":   { "required_clearance": "top-secret",   "restricted_hours": [9, 17] }
+  }
+}

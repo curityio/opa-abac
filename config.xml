@@ -1,0 +1,116 @@
+<config xmlns="http://tail-f.com/ns/config/1.0">
+  <profiles xmlns="https://curity.se/ns/conf/base">
+    <profile>
+      <id>authentication-service</id>
+      <type xmlns:auth="https://curity.se/ns/conf/profile/authentication">auth:authentication-service</type>
+      <settings>
+        <authentication-service xmlns="https://curity.se/ns/conf/profile/authentication">
+          <authenticators>
+            <authenticator>
+              <id>abac-username</id>
+              <username xmlns="https://curity.se/ns/ext-conf/username"/>
+            </authenticator>
+          </authenticators>
+        </authentication-service>
+      </settings>
+    </profile>
+    <profile>
+      <id>token-service</id>
+      <type xmlns:as="https://curity.se/ns/conf/profile/oauth">as:oauth-service</type>
+      <settings>
+        <authorization-server xmlns="https://curity.se/ns/conf/profile/oauth">
+          <scopes>
+            <scope>
+              <id>clearance</id>
+              <claims>clearance</claims>
+              <claims>department</claims>
+            </scope>
+          </scopes>
+          <claims>
+            <claim>
+              <name>clearance</name>
+              <value-provided-by>abac-attributes</value-provided-by>
+              <transformation>
+                <input-attribute-names>clearance</input-attribute-names>
+              </transformation>
+            </claim>
+            <claim>
+              <name>department</name>
+              <value-provided-by>abac-attributes</value-provided-by>
+              <transformation>
+                <input-attribute-names>department</input-attribute-names>
+              </transformation>
+            </claim>
+            <claims-value-provider>
+              <id>abac-attributes</id>
+              <script-claims-provider xmlns="https://curity.se/ns/ext-conf/script-claims-provider">
+                <procedure>abac-attributes</procedure>
+                <data-source>
+                  <data-source>default-datasource</data-source>
+                </data-source>
+              </script-claims-provider>
+            </claims-value-provider>
+            <claims-mappers>
+              <claims-mapper>
+                <id>default</id>
+                <access_token>
+                  <claim>clearance</claim>
+                  <claim>department</claim>
+                </access_token>
+              </claims-mapper>
+            </claims-mappers>
+          </claims>
+          <client-store>
+            <config-backed>
+              <client>
+                <id>abac-demo</id>
+                <no-authentication>true</no-authentication>
+                <redirect-uris>http://localhost:5173/callback</redirect-uris>
+                <proof-key>
+                  <require-proof-key>true</require-proof-key>
+                </proof-key>
+                <refresh-token-ttl>disabled</refresh-token-ttl>
+                <scope>openid</scope>
+                <scope>profile</scope>
+                <scope>clearance</scope>
+                <user-authentication>
+                  <allowed-authenticators>abac-username</allowed-authenticators>
+                  <force-authn>true</force-authn>
+                </user-authentication>
+                <capabilities>
+                  <code></code>
+                </capabilities>
+              </client>
+            </config-backed>
+          </client-store>
+        </authorization-server>
+      </settings>
+      <token-issuers>
+        <default-token-issuer>
+          <access-token-as-jwt></access-token-as-jwt>
+        </default-token-issuer>
+      </token-issuers>
+    </profile>
+  </profiles>
+  <processing xmlns="https://curity.se/ns/conf/base">
+    <procedures>
+      <claims-provider-procedure>
+        <id>abac-attributes</id>
+        <script>/*
+ * The attributes of each demo user. Curity runs this when it issues a token;
+ * the returned values become the clearance and department claims.
+ */
+function result(context) {
+    var users = {
+        alice:   { department: "security",    clearance: "top-secret"   },
+        bob:     { department: "marketing",   clearance: "internal"     },
+        charlie: { department: "engineering", clearance: "confidential" }
+    };
+
+    return users[context.subjectAttributes.subject] || {};
+}
+</script>
+      </claims-provider-procedure>
+    </procedures>
+  </processing>
+</config>
